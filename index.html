@@ -58,11 +58,35 @@
 
         /* Capa de Links */
         .annotationLayer {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            position: absolute; 
+            top: 0; 
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: auto;
         }
+        
+        .annotationLayer section {
+            position: absolute;
+            cursor: pointer;
+        }
+        
+        .annotationLayer .linkAnnotation > a {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1;
+        }
+        
         .annotationLayer .linkAnnotation > a:hover {
-            background: rgba(220, 107, 47, 0.1);
+            background: rgba(220, 107, 47, 0.15);
             box-shadow: 0 0 0 2px var(--accent-color);
+            border-radius: 2px;
         }
 
         /* --- TOOLBAR --- */
@@ -166,7 +190,7 @@
 <body>
 
     <div id="grained-container"></div>
-    <div id="loader">CARGANDO DOCUMENTOS...</div>
+    <div id="loader">CARGANDO RECURSOS...</div>
 
     <!-- SIDEBAR -->
     <div id="sidebar">
@@ -258,9 +282,50 @@
             ctx = canvas.getContext('2d'),
             annotationDiv = document.getElementById('annotation-layer'),
             pageContainer = document.getElementById('page-container'),
-            wrapper = document.getElementById('pdf-wrapper');
+            wrapper = document.getElementById('pdf-wrapper'),
+            currentPage = null;
 
         var sidebarState = 'closed';
+
+        // Servicio de enlaces personalizado
+        var customLinkService = {
+            pdfDocument: null,
+            
+            getDestinationHash: function(dest) {
+                return '#';
+            },
+            
+            getAnchorUrl: function(hash) {
+                return '#';
+            },
+            
+            setHash: function(hash) {},
+            
+            executeNamedAction: function(action) {
+                console.log('Named action:', action);
+            },
+            
+            executeSetOCGState: function(action) {},
+            
+            navigateTo: function(dest) {
+                if (!dest) return;
+                goToDestination(dest);
+            },
+            
+            goToDestination: function(dest) {
+                if (!dest) return;
+                goToDestination(dest);
+            },
+            
+            addLinkAttributes: function(link, url, newWindow) {
+                // Para enlaces externos
+                if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    link.href = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                }
+            }
+        };
 
         function getFitScale(page) {
             var viewport = page.getViewport({scale: 1});
@@ -271,7 +336,10 @@
 
         function renderPage(num) {
             pageRendering = true;
+            
             pdfDoc.getPage(num).then(function(page) {
+                currentPage = page;
+                
                 if(scale === 1.0) scale = getFitScale(page);
 
                 var viewport = page.getViewport({scale: scale});
@@ -280,47 +348,65 @@
                 pageContainer.style.width = viewport.width + 'px';
                 pageContainer.style.height = viewport.height + 'px';
 
-                var renderContext = { canvasContext: ctx, viewport: viewport };
+                var renderContext = { 
+                    canvasContext: ctx, 
+                    viewport: viewport 
+                };
+                
                 var renderTask = page.render(renderContext);
 
                 renderTask.promise.then(function() {
                     pageRendering = false;
                     document.getElementById('loader').style.display = 'none';
+                    
+                    // Limpiar anotaciones anteriores
                     annotationDiv.innerHTML = '';
                     
+                    // Renderizar anotaciones (enlaces)
                     return page.getAnnotations();
                 }).then(function(annotations) {
                     if (annotations && annotations.length > 0) {
                         var viewportClone = viewport.clone({ dontFlip: true });
                         
+                        // Renderizar la capa de anotaciones
                         pdfjsLib.AnnotationLayer.render({
                             viewport: viewportClone,
                             div: annotationDiv,
                             annotations: annotations,
                             page: page,
-                            linkService: {
-                                externalLinkTarget: 2,
-                                getDestinationHash: function(dest) { 
-                                    return '#'; 
-                                },
-                                getAnchorUrl: function(hash) {
-                                    return '#';
-                                }
-                            },
+                            linkService: customLinkService,
+                            downloadManager: null,
+                            annotationStorage: null,
                             renderInteractiveForms: false
                         });
                         
-                        // Manejar clics en links internos
-                        var links = annotationDiv.querySelectorAll('a');
-                        links.forEach(function(link) {
-                            link.addEventListener('click', function(e) {
-                                var dest = this.getAttribute('data-dest');
-                                if (dest) {
-                                    e.preventDefault();
-                                    goToDestination(dest);
+                        // Interceptar clics en los enlaces para navegación interna
+                        setTimeout(function() {
+                            var links = annotationDiv.querySelectorAll('a');
+                            links.forEach(function(link) {
+                                var href = link.getAttribute('href');
+                                
+                                // Si es un enlace interno (empieza con #)
+                                if (href && href.startsWith('#')) {
+                                    link.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        
+                                        // Buscar la anotación correspondiente
+                                        for (var i = 0; i < annotations.length; i++) {
+                                            var ann = annotations[i];
+                                            if (ann.subtype === 'Link' && ann.dest) {
+                                                // Verificar si este es el enlace clickeado
+                                                var linkElement = link.closest('section');
+                                                if (linkElement && linkElement.dataset.annotationId === ann.id) {
+                                                    goToDestination(ann.dest);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    });
                                 }
                             });
-                        });
+                        }, 100);
                     }
                     
                     if (pageNumPending !== null) { 
@@ -329,13 +415,14 @@
                     }
                 }).catch(function(err) {
                     console.warn('Error en anotaciones:', err);
+                    pageRendering = false;
                     if (pageNumPending !== null) { 
                         renderPage(pageNumPending); 
                         pageNumPending = null; 
                     }
                 });
             }).catch(function(err){
-                console.error(err);
+                console.error('Error al renderizar:', err);
                 document.getElementById('loader').innerHTML = "ERROR AL RENDERIZAR PÁGINA: " + err.message;
                 pageRendering = false;
             });
@@ -347,30 +434,44 @@
         function goToDestination(dest) {
             if(!dest || !pdfDoc) return;
             
+            // Si el destino es un string (nombre), resolverlo primero
             if (typeof dest === 'string') {
-                pdfDoc.getDestination(dest).then(function(destArr) {
-                    if(destArr && destArr.length > 0) {
-                        navigateToPage(destArr[0]);
+                pdfDoc.getDestination(dest).then(function(destArray) {
+                    if (destArray && destArray.length > 0) {
+                        navigateToPage(destArray[0]);
                     }
                 }).catch(function(err) {
                     console.log('No se pudo resolver el destino:', err);
                 });
-            } else if (Array.isArray(dest) && dest.length > 0) {
+            } 
+            // Si el destino ya es un array
+            else if (Array.isArray(dest) && dest.length > 0) {
                 navigateToPage(dest[0]);
             }
         }
 
-        function navigateToPage(destRef) {
-            if (!destRef) return;
+        function navigateToPage(pageRef) {
+            if (!pageRef || !pdfDoc) return;
             
-            pdfDoc.getPageIndex(destRef).then(function(pageIndex) {
+            // Si pageRef es un número, ir directamente
+            if (typeof pageRef === 'number') {
+                var newPage = pageRef;
+                if (newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
+                    pageNum = newPage;
+                    queueRenderPage(pageNum);
+                }
+                return;
+            }
+            
+            // Si es una referencia de objeto, obtener el índice de página
+            pdfDoc.getPageIndex(pageRef).then(function(pageIndex) {
                 var newPage = pageIndex + 1;
-                if(newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
+                if (newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
                     pageNum = newPage;
                     queueRenderPage(pageNum);
                 }
             }).catch(function(err) {
-                console.log("Error al navegar:", err);
+                console.log("Error al navegar a la página:", err);
             });
         }
 
@@ -393,6 +494,7 @@
                     container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Sin índice.</div>';
                     return;
                 }
+                
                 outline.forEach(function(item) {
                     var div = document.createElement('div');
                     div.className = 'outline-item';
@@ -549,6 +651,8 @@
         // --- INICIALIZAR ---
         pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
             pdfDoc = pdfDoc_;
+            customLinkService.pdfDocument = pdfDoc;
+            
             document.getElementById('page-total').textContent = "/ " + (pdfDoc.numPages < 10 ? '0' : '') + pdfDoc.numPages;
             renderPage(pageNum);
         }).catch(function(err) {
