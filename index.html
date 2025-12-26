@@ -41,11 +41,16 @@
             height: 100vh; width: 100vw; position: relative; z-index: 10; 
         }
 
+        /* --- CORRECCIÓN DE ALINEACIÓN (BARRA DE CONTROL) --- */
         .df-ui-wrapper {
             background: transparent !important;
             box-shadow: none !important;
             border: none !important;
             padding-bottom: 30px !important;
+            /* Flexbox para alinear todo horizontalmente al centro */
+            display: flex !important;
+            align-items: center !important; 
+            justify-content: center !important;
         }
 
         /* --- BOTONES --- */
@@ -70,18 +75,50 @@
             text-shadow: 0 0 15px rgba(220, 107, 47, 0.6); 
         }
 
-        /* --- FOLIO --- */
+        /* --- CORRECCIÓN ESPECÍFICA PARA EL NÚMERO DE PÁGINA (FOLIO) --- */
         .df-ui-page {
-            width: auto !important; min-width: 0 !important; margin: 0 2px !important;
-            padding: 0 !important; background: transparent !important; box-shadow: none !important; border: none !important;
+            width: auto !important; 
+            min-width: 0 !important; 
+            margin: 0 10px !important; /* Igualar margen a los botones */
+            padding: 0 !important; 
+            background: transparent !important; 
+            box-shadow: none !important; 
+            border: none !important;
+            
+            /* Esto arregla la caída: convierte el contenedor del número en flex centrado */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 30px !important; /* Forzar misma altura visual que los iconos */
         }
+        
+        .df-ui-page label {
+            /* Asegura que el texto "/" y el total de páginas también estén centrados */
+            margin-bottom: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+        }
+
         .df-ui-page input {
-            width: 40px !important; text-align: center !important; background: transparent !important;
-            border: none !important; color: var(--text-main) !important; font-family: 'Archivo', sans-serif !important;
-            font-size: 12px !important; padding: 0 !important; height: 30px !important; box-shadow: none !important;
+            width: 40px !important; 
+            text-align: center !important; 
+            background: transparent !important;
+            border: none !important; 
+            color: var(--text-main) !important; 
+            font-family: 'Archivo', sans-serif !important;
+            font-size: 14px !important; /* Ajuste ligero de tamaño para que coincida con iconos */
+            padding: 0 !important; 
+            height: 100% !important; /* Ocupar altura del padre */
+            box-shadow: none !important;
+            margin: 0 !important; /* Eliminar margen nativo del input */
+            line-height: normal !important;
         }
+        
         .df-ui-page input:focus { color: var(--accent-color) !important; outline: none; }
-        .df-ui-btn.df-ui-prev, .df-ui-btn.df-ui-next { margin: 0 !important; }
+        
+        /* Ajuste de márgenes para los botones prev/next específicos */
+        .df-ui-btn.df-ui-prev, .df-ui-btn.df-ui-next { margin: 0 5px !important; }
 
         /* --- TOOLTIPS --- */
         .tippy-box[data-theme~='stupor'] {
@@ -189,23 +226,31 @@
                 backgroundColor: "transparent",
                 disableFolderPath: true,
                 
-                // ✨ MODIFICACIÓN: Modo de página única
-                pageMode: "single",
-                
+                // === CORRECCIÓN 1: VISTA DE UNA SOLA PÁGINA ===
+                pageMode: "single",       
+                singlePageMode: true,     
+                // ===============================================
+
                 text: {
                     toggleSound: "Sonido", toggleThumbnails: "Vista", toggleOutline: "Índice",
                     previousPage: "Ant", nextPage: "Sig", toggleFullscreen: "Full",
                     zoomIn: "Zoom +", zoomOut: "Zoom -"
                 },
                 
-                allControls: "altPrev,pageNumber,altNext,play,outline,thumbnail,zoomIn,zoomOut,fullScreen",
-                hideControls: "share,download,more",
+                // Eliminamos 'play' de los controles ya que en modo single page no es tan útil
+                allControls: "altPrev,pageNumber,altNext,outline,thumbnail,zoomIn,zoomOut,fullScreen",
+                hideControls: "share,download,more,play",
 
                 onReady: function(scene) {
                     var infoBtn = $('<div class="df-ui-btn df-ui-info" id="btn-info-custom" title="INFORMACIÓN"><i class="ti-info-alt"></i></div>');
                     infoBtn.on('click', function() { toggleInfo(); });
                     var controls = $('.df-ui-wrapper');
                     if(controls.length > 0) { controls.append(infoBtn); }
+
+                    // Pequeño hack para forzar el recálculo de alineación si el navegador se retrasa
+                    setTimeout(function() {
+                        $('.df-ui-page').css('display', 'flex');
+                    }, 100);
 
                     setTimeout(function() {
                         tippy('.df-ui-btn', {
