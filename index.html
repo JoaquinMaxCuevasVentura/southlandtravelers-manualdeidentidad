@@ -121,7 +121,7 @@
 
     <div id="grained-container"></div>
 
-    <!-- MODAL INFO (ACTUALIZADO) -->
+    <!-- MODAL INFO -->
     <div id="infoModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleInfo()">&times;</span>
@@ -180,15 +180,17 @@
 
         jQuery(document).ready(function() {
             
-            // NOMBRE EXACTO DEL ARCHIVO
             var bookOptions = {
                 source: "SOUTHLANDTRAVELERS_ManualCompleto_WEB-FINAL_v01_26122025.pdf",
                 
                 webgl: true,
                 height: "100%",
-                duration: 700, 
-                backgroundColor: "transparent", 
-                disableFolderPath: true, 
+                duration: 700,
+                backgroundColor: "transparent",
+                disableFolderPath: true,
+                
+                // ✨ MODIFICACIÓN: Modo de página única
+                pageMode: "single",
                 
                 text: {
                     toggleSound: "Sonido", toggleThumbnails: "Vista", toggleOutline: "Índice",
@@ -221,5 +223,4 @@
     </script>
 
 </body>
-
 </html>
