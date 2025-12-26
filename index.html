@@ -5,163 +5,214 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SOUTHLAND TRAVELERS | Manual de identidad corporativa</title>
 
-    <!-- 1. FUENTE ARCHIVO -->
+    <!-- 1. FUENTES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- 2. ICONOS (Themify - Mismos que usaba dFlip) -->
+    <!-- 2. ICONOS (Themify - Para igualar la estética de tu captura) -->
     <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet" type="text/css">
+    
+    <!-- 3. ESTILOS PDF.JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf_viewer.min.css">
 
     <style>
-        /* --- CONFIGURACIÓN VISUAL --- */
+        /* --- VARIABLES DE DISEÑO --- */
         :root {
             --bg-color: #050505;      
-            --accent-color: #dc6b2f; 
+            --accent-color: #dc6b2f;
             --text-main: #FFFFFF;     
-            --ui-opacity: 0.7;
+            --ui-opacity: 0.8;
+            --sidebar-width: 280px;
         }
 
         body, html {
-            height: 100%;
-            margin: 0;
+            height: 100%; margin: 0;
             background-color: var(--bg-color);
             font-family: 'Archivo', sans-serif !important;
             overflow: hidden;
-            user-select: none; /* Evita selección accidental al hacer clic */
+            user-select: none;
         }
 
-        /* --- FONDO DE RUIDO --- */
+        /* FONDO */
         #grained-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
         }
 
-        /* --- CONTENEDOR DEL PDF --- */
+        /* --- VISOR PRINCIPAL --- */
         #pdf-wrapper {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            overflow: auto; 
+            transition: margin-left 0.3s ease; /* Para animar si abrimos sidebar */
         }
 
-        canvas {
-            box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Sombra suave para separar del fondo */
-            max-width: 95%;
-            max-height: 90%;
-            transition: transform 0.2s ease; /* Suavidad al hacer zoom */
+        #page-container {
+            position: relative;
+            box-shadow: 0 0 60px rgba(0,0,0,0.6);
+            transition: transform 0.2s ease;
         }
 
-        /* --- BARRA DE HERRAMIENTAS (Recreada estilo dFlip) --- */
+        canvas { display: block; }
+
+        /* Capa de Links Interactivos */
+        .annotationLayer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        }
+        .annotationLayer .linkAnnotation > a:hover {
+            background: rgba(220, 107, 47, 0.1);
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        /* --- BARRA DE HERRAMIENTAS (REPLICA EXACTA) --- */
         #custom-toolbar {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.0); /* Totalmente transparente como pediste */
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.0); /* Transparente */
+            padding: 8px 15px;
+            gap: 12px;
+        }
+
+        .tool-group {
+            display: flex; align-items: center; gap: 5px;
+        }
+        
+        .separator {
+            width: 1px; height: 18px; background: rgba(255,255,255,0.2); margin: 0 5px;
         }
 
         .tool-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 20px;
-            cursor: pointer;
-            opacity: var(--ui-opacity);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px;
+            background: transparent; border: none; color: var(--text-main);
+            font-size: 18px; cursor: pointer; opacity: var(--ui-opacity);
+            transition: all 0.2s ease; padding: 6px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px;
         }
 
-        .tool-btn:hover {
-            color: var(--accent-color);
-            transform: scale(1.2);
-            opacity: 1;
+        .tool-btn:hover, .tool-btn.active {
+            color: var(--accent-color); transform: scale(1.15); opacity: 1;
             text-shadow: 0 0 10px rgba(220, 107, 47, 0.6);
         }
-        
-        /* Contador de páginas */
-        #page-count {
-            font-size: 12px;
-            color: var(--text-main);
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin: 0 10px;
-            opacity: 0.8;
-            min-width: 60px;
-            text-align: center;
+
+        /* Input de página estilo dFlip */
+        #page-input {
+            background: transparent; border: none; 
+            color: var(--text-main); font-family: 'Archivo', sans-serif;
+            font-size: 13px; width: 30px; text-align: right;
+            outline: none; font-weight: 600;
+        }
+        #page-total {
+            color: var(--text-main); font-size: 13px; opacity: 0.7; font-weight: 400;
         }
 
-        /* --- VENTANA MODAL INFO --- */
+        /* --- SIDEBAR (INDICE Y MINIATURAS) --- */
+        #sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-width);
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 90;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column;
+        }
+        #sidebar.open { transform: translateX(0); }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px; letter-spacing: 1px; color: var(--accent-color); text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .sidebar-content {
+            flex: 1; overflow-y: auto; padding: 15px;
+        }
+        
+        /* Estilos Índice */
+        .outline-item {
+            padding: 8px 0; color: #ccc; font-size: 13px; cursor: pointer;
+            transition: 0.2s; text-decoration: none; display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .outline-item:hover { color: var(--accent-color); padding-left: 5px; }
+        
+        /* Estilos Miniaturas */
+        .thumbnail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .thumb-item {
+            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+            border-radius: 4px; overflow: hidden;
+        }
+        .thumb-item img { width: 100%; height: auto; display: block; }
+        .thumb-item:hover, .thumb-item.current { border-color: var(--accent-color); }
+        .thumb-label { text-align: center; font-size: 10px; color: #666; margin-top: 3px; }
+
+        /* --- MODAL INFO --- */
         .modal-overlay {
-            display: none; 
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95); 
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); z-index: 9999;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
         }
         .modal-overlay.show { display: flex; opacity: 1; }
 
-        .modal-content {
-            color: #fff;
-            max-width: 500px;
-            width: 80%;
-            text-align: center;
-            position: relative;
-        }
+        .modal-content { color: #fff; max-width: 500px; width: 80%; text-align: center; position: relative; }
         .modal-line { width: 40px; height: 2px; background-color: var(--accent-color); margin: 20px auto; }
         .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 3px; }
         .modal-subtitle { font-size: 11px; color: var(--accent-color); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
         .modal-body { font-size: 14px; color: #ccc; line-height: 1.6; font-weight: 300; }
+        .modal-contact { margin-top: 15px; font-size: 12px; color: #fff; opacity: 0.8; letter-spacing: 0.5px; }
         .modal-note { margin-top: 30px; font-size: 10px; color: #666; border-top: 1px solid #222; padding-top: 15px; }
-        .close-modal { position: absolute; top: -50px; right: 0; color: #666; font-size: 30px; cursor: pointer; transition: 0.2s; font-weight: 100; font-family: sans-serif;}
+        .close-modal { position: absolute; top: -50px; right: 0; color: #666; font-size: 30px; cursor: pointer; }
         .close-modal:hover { color: var(--accent-color); }
-        
-        /* Loader */
+
         #loader {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--accent-color); font-size: 12px; letter-spacing: 2px;
-            z-index: 5;
+            color: var(--accent-color); font-size: 12px; letter-spacing: 2px; z-index: 5;
         }
+
+        /* Scrollbar del sidebar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
     </style>
 </head>
 <body>
 
-    <!-- FONDO -->
     <div id="grained-container"></div>
-    <div id="loader">CARGANDO MANUAL...</div>
+    <div id="loader">CARGANDO DOCUMENTO...</div>
+
+    <!-- SIDEBAR (Índice y Miniaturas) -->
+    <div id="sidebar">
+        <div class="sidebar-header" id="sidebar-title">NAVEGACIÓN</div>
+        <div class="sidebar-content" id="sidebar-body">
+            <!-- Se llena con JS -->
+        </div>
+    </div>
 
     <!-- MODAL INFO -->
     <div id="infoModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleInfo()">✕</span>
             <div class="modal-title">SOUTHLAND TRAVELERS</div>
-            <div class="modal-subtitle">Manual de identidad corporativa</div>
+            <div class="modal-subtitle">MANUAL DE IDENTIDAD CORPORATIVA</div>
             <div class="modal-line"></div>
             <div class="modal-body">
                 <p>DISEÑO DE IDENTIDAD VISUAL<br>
-                <strong style="color:white; font-size:15px; letter-spacing:1px;">Joaquin Max Cuevas Ventura</strong><br>
-                2023</p>
+                <strong style="color:white; font-size:15px; letter-spacing:1px;">Joaquin Max Cuevas Ventura</strong></p>
+                
+                <div class="modal-contact">
+                    2023<br>
                 <div class="modal-note">
-                    Nota: Proyecto profesional de identidad visual corporativa para Southland Travelers, agencia de turismo con enfoque en Sudamérica. Este manual sistematiza los activos intangibles de la marca.
+                    Nota: Proyecto profesional de identidad visual corporativa para Southland Travelers, agencia de turismo con enfoque en Sudamérica. Este manual sistematiza los activos intangibles de la marca para garantizar su coherencia sistémica en todos los medios comunicativos.
                 </div>
             </div>
         </div>
@@ -169,27 +220,54 @@
 
     <!-- VISOR PDF -->
     <div id="pdf-wrapper">
-        <canvas id="the-canvas"></canvas>
+        <div id="page-container">
+            <canvas id="the-canvas"></canvas>
+            <div id="annotation-layer" class="annotationLayer"></div>
+        </div>
     </div>
 
-    <!-- BARRA DE HERRAMIENTAS MANUAL -->
+    <!-- BARRA DE HERRAMIENTAS (REPLICA EXACTA) -->
     <div id="custom-toolbar">
-        <button class="tool-btn" id="prev" title="Anterior"><i class="ti-arrow-left"></i></button>
-        <span id="page-count">00 / 00</span>
-        <button class="tool-btn" id="next" title="Siguiente"><i class="ti-arrow-right"></i></button>
-        
-        <div style="width: 20px;"></div> <!-- Separador -->
+        <!-- Grupo Navegación -->
+        <div class="tool-group">
+            <button class="tool-btn" id="prev" title="Anterior"><i class="ti-angle-left"></i></button>
+            <div style="display:flex; align-items:center; padding: 0 5px;">
+                <input type="text" id="page-input" value="1">
+                <span id="page-total">/ 00</span>
+            </div>
+            <button class="tool-btn" id="next" title="Siguiente"><i class="ti-angle-right"></i></button>
+        </div>
 
-        <button class="tool-btn" id="zoom-out" title="Alejar"><i class="ti-zoom-out"></i></button>
-        <button class="tool-btn" id="zoom-in" title="Acercar"><i class="ti-zoom-in"></i></button>
-        <button class="tool-btn" id="btn-info" title="Información"><i class="ti-info-alt"></i></button>
+        <div class="separator"></div>
+
+        <!-- Grupo Paneles -->
+        <div class="tool-group">
+            <button class="tool-btn" id="btn-outline" title="Índice (Tabla de Contenido)"><i class="ti-list"></i></button>
+            <button class="tool-btn" id="btn-thumbs" title="Vistas en Miniatura"><i class="ti-layout-grid2"></i></button>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Grupo Zoom -->
+        <div class="tool-group">
+            <button class="tool-btn" id="zoom-in" title="Acercar"><i class="ti-zoom-in"></i></button>
+            <button class="tool-btn" id="zoom-out" title="Alejar"><i class="ti-zoom-out"></i></button>
+        </div>
+
+        <!-- Grupo Pantalla -->
+        <div class="tool-group">
+            <button class="tool-btn" id="btn-fullscreen" title="Pantalla Completa"><i class="ti-fullscreen"></i></button>
+        </div>
+        
+        <!-- Grupo Info -->
+        <div class="tool-group">
+             <button class="tool-btn" id="btn-info" title="Información"><i class="ti-info-alt"></i></button>
+        </div>
     </div>
 
-    <!-- 3. SCRIPTS -->
+    <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/grained/0.0.2/grained.min.js"></script>
-    
-    <!-- LIBRERÍA PDF.JS (Motor robusto) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
     <script>
@@ -199,156 +277,283 @@
                 "animate": true, "patternWidth": 100, "patternHeight": 100,
                 "grainOpacity": 0.05, "grainDensity": 1, "grainWidth": 1, "grainHeight": 1
             });
-        } catch(e) { console.log("Error grano"); }
+        } catch(e) {}
 
-        // --- 2. CONFIGURACIÓN PDF.JS ---
+        // --- 2. MOTOR PDF.JS ---
         
-        // !IMPORTANTE: Nombre exacto de tu archivo
+        // ! CAMBIA ESTO POR TU ARCHIVO PDF
         var url = 'Manual de identidad corporativa_Soutland Travelers.pdf';
 
-        // Definir el worker de PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         var pdfDoc = null,
             pageNum = 1,
             pageRendering = false,
             pageNumPending = null,
-            scale = 1.0, // Escala inicial (se recalculará para ajustar a pantalla)
+            scale = 1.0,
             canvas = document.getElementById('the-canvas'),
             ctx = canvas.getContext('2d'),
-            container = document.getElementById('pdf-wrapper');
+            annotationDiv = document.getElementById('annotation-layer'),
+            pageContainer = document.getElementById('page-container'),
+            wrapper = document.getElementById('pdf-wrapper');
 
-        // Función para calcular el zoom ideal para que la página quepa entera en la pantalla
+        var sidebarState = 'closed'; // closed, outline, thumbs
+
+        // AJUSTAR A PANTALLA
         function getFitScale(page) {
             var viewport = page.getViewport({scale: 1});
-            var containerWidth = container.clientWidth;
-            var containerHeight = container.clientHeight;
-            
-            // Calculamos ratios
-            var wRatio = (containerWidth * 0.95) / viewport.width;  // 95% del ancho
-            var hRatio = (containerHeight * 0.95) / viewport.height; // 95% del alto
-            
-            // Elegimos el menor para que quepa todo sin scroll
+            var wRatio = (wrapper.clientWidth * 0.90) / viewport.width;
+            var hRatio = (wrapper.clientHeight * 0.90) / viewport.height;
             return Math.min(wRatio, hRatio);
         }
 
-        // Renderizar la página
+        // RENDERIZAR PÁGINA PRINCIPAL
         function renderPage(num) {
             pageRendering = true;
             
-            // Traer la página
             pdfDoc.getPage(num).then(function(page) {
-                
-                // Si es la primera carga, ajustamos al tamaño de pantalla
-                var currentScale = scale;
-                if(scale === 1.0) { // Solo si no hemos hecho zoom manual
-                    currentScale = getFitScale(page);
-                    scale = currentScale; // Guardamos esta escala base
-                }
+                if(scale === 1.0) scale = getFitScale(page);
 
                 var viewport = page.getViewport({scale: scale});
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
+                pageContainer.style.width = viewport.width + 'px';
+                pageContainer.style.height = viewport.height + 'px';
 
-                var renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
+                var renderContext = { canvasContext: ctx, viewport: viewport };
                 var renderTask = page.render(renderContext);
 
-                // Esperar a que termine renderizado
                 renderTask.promise.then(function() {
                     pageRendering = false;
-                    document.getElementById('loader').style.display = 'none'; // Ocultar loader
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
+                    document.getElementById('loader').style.display = 'none';
+                    annotationDiv.innerHTML = ''; 
+
+                    // Renderizar Links Interactivos
+                    return page.getAnnotations();
+                }).then(function(annotations) {
+                    if (annotations && annotations.length > 0) {
+                        pdfjsLib.AnnotationLayer.render({
+                            viewport: viewport.clone({ dontFlip: true }),
+                            div: annotationDiv,
+                            annotations: annotations,
+                            page: page,
+                            linkService: {
+                                navigateTo: function(dest) {
+                                    if (typeof dest === 'string') {
+                                        pdfDoc.getDestination(dest).then(function(destArr) {
+                                            if(destArr) goToDestination(destArr);
+                                        });
+                                    } else { goToDestination(dest); }
+                                },
+                                getDestinationHash: function(dest) { return '#'; },
+                                addLinkAttributes: function(link, url) {
+                                    link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                                }
+                            }
+                        });
                     }
+                    if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
                 });
             });
 
-            // Actualizar contador
-            document.getElementById('page-count').textContent = num + " / " + pdfDoc.numPages;
+            // Actualizar UI
+            document.getElementById('page-input').value = num;
+            document.getElementById('page-total').textContent = "/ " + pdfDoc.numPages;
+            
+            // Actualizar sidebar si está abierto en miniaturas
+            if(sidebarState === 'thumbs') highlightCurrentThumb();
+        }
+
+        function goToDestination(dest) {
+            pdfDoc.getPageIndex(dest[0]).then(function(pageIndex) {
+                var newPage = pageIndex + 1;
+                if(newPage !== pageNum) {
+                    pageNum = newPage; queueRenderPage(pageNum);
+                }
+            });
         }
 
         function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
+            if (pageRendering) pageNumPending = num;
+            else renderPage(num);
+        }
+
+        // --- 3. FUNCIONES DEL SIDEBAR (Índice y Miniaturas) ---
+
+        // GENERAR ÍNDICE (OUTLINE)
+        function renderOutline() {
+            var container = document.getElementById('sidebar-body');
+            container.innerHTML = '';
+            document.getElementById('sidebar-title').innerText = "ÍNDICE DE CONTENIDOS";
+
+            pdfDoc.getOutline().then(function(outline) {
+                if (!outline) {
+                    container.innerHTML = '<div style="color:#666; font-size:12px; text-align:center; margin-top:20px;">Este documento no tiene índice estructurado.</div>';
+                    return;
+                }
+                
+                outline.forEach(function(item) {
+                    var div = document.createElement('div');
+                    div.className = 'outline-item';
+                    div.innerText = item.title;
+                    div.onclick = function() {
+                        if (typeof item.dest === 'string') {
+                            pdfDoc.getDestination(item.dest).then(function(dest) { goToDestination(dest); });
+                        } else { goToDestination(item.dest); }
+                    };
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        // GENERAR MINIATURAS (THUMBNAILS)
+        function renderThumbnails() {
+            var container = document.getElementById('sidebar-body');
+            container.innerHTML = '';
+            document.getElementById('sidebar-title').innerText = "VISTA DE PÁGINAS";
+            
+            var grid = document.createElement('div');
+            grid.className = 'thumbnail-grid';
+            container.appendChild(grid);
+
+            // Loop simple para generar miniaturas
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                (function(pageNumIndex) {
+                    var thumbItem = document.createElement('div');
+                    thumbItem.className = 'thumb-item';
+                    if(pageNumIndex === pageNum) thumbItem.classList.add('current');
+                    thumbItem.id = 'thumb-' + pageNumIndex;
+                    
+                    // Canvas pequeño
+                    var thumbCanvas = document.createElement('canvas');
+                    var thumbCtx = thumbCanvas.getContext('2d');
+                    
+                    thumbItem.appendChild(thumbCanvas);
+                    
+                    var label = document.createElement('div');
+                    label.className = 'thumb-label';
+                    label.innerText = pageNumIndex;
+                    thumbItem.appendChild(label);
+                    
+                    thumbItem.onclick = function() {
+                        pageNum = pageNumIndex;
+                        queueRenderPage(pageNum);
+                    };
+
+                    grid.appendChild(thumbItem);
+
+                    // Renderizar miniatura (Lazyish)
+                    pdfDoc.getPage(pageNumIndex).then(function(page) {
+                        var viewport = page.getViewport({ scale: 0.15 }); // Escala pequeña
+                        thumbCanvas.height = viewport.height;
+                        thumbCanvas.width = viewport.width;
+                        
+                        page.render({
+                            canvasContext: thumbCtx,
+                            viewport: viewport
+                        });
+                    });
+
+                })(i);
             }
         }
 
-        function onPrevPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
+        function highlightCurrentThumb() {
+            var prev = document.querySelector('.thumb-item.current');
+            if(prev) prev.classList.remove('current');
+            var curr = document.getElementById('thumb-' + pageNum);
+            if(curr) {
+                curr.classList.add('current');
+                curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
-        function onNextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
+        // TOGGLE SIDEBAR
+        function toggleSidebar(mode) {
+            var sidebar = document.getElementById('sidebar');
+            var btnOutline = document.getElementById('btn-outline');
+            var btnThumbs = document.getElementById('btn-thumbs');
+
+            // Si ya está abierto en el mismo modo, cerrar
+            if (sidebarState === mode) {
+                sidebar.classList.remove('open');
+                sidebarState = 'closed';
+                btnOutline.classList.remove('active');
+                btnThumbs.classList.remove('active');
+            } else {
+                // Abrir o cambiar modo
+                if(mode === 'outline') {
+                    renderOutline();
+                    btnOutline.classList.add('active');
+                    btnThumbs.classList.remove('active');
+                } else {
+                    renderThumbnails();
+                    btnThumbs.classList.add('active');
+                    btnOutline.classList.remove('active');
+                }
+                sidebar.classList.add('open');
+                sidebarState = mode;
+            }
         }
 
-        function onZoomIn() {
-            scale += 0.2;
-            queueRenderPage(pageNum);
-        }
+        // --- 4. EVENTOS DE CONTROL ---
+        
+        // Botones Toolbar
+        document.getElementById('prev').onclick = function() { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); };
+        document.getElementById('next').onclick = function() { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); };
+        document.getElementById('zoom-in').onclick = function() { scale += 0.2; queueRenderPage(pageNum); };
+        document.getElementById('zoom-out').onclick = function() { if(scale <= 0.4) return; scale -= 0.2; queueRenderPage(pageNum); };
+        
+        document.getElementById('btn-fullscreen').onclick = function() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else if (document.exitFullscreen) document.exitFullscreen();
+        };
 
-        function onZoomOut() {
-            if(scale <= 0.4) return;
-            scale -= 0.2;
-            queueRenderPage(pageNum);
-        }
+        document.getElementById('btn-outline').onclick = function() { toggleSidebar('outline'); };
+        document.getElementById('btn-thumbs').onclick = function() { toggleSidebar('thumbs'); };
 
-        // --- 3. EVENTOS DE BOTONES ---
-        document.getElementById('prev').addEventListener('click', onPrevPage);
-        document.getElementById('next').addEventListener('click', onNextPage);
-        document.getElementById('zoom-in').addEventListener('click', onZoomIn);
-        document.getElementById('zoom-out').addEventListener('click', onZoomOut);
+        // Input de página (Enter para ir)
+        document.getElementById('page-input').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                var val = parseInt(this.value);
+                if (val >= 1 && val <= pdfDoc.numPages) {
+                    pageNum = val; queueRenderPage(pageNum);
+                }
+            }
+        });
 
         // Teclado
         document.addEventListener('keydown', function(e) {
-            if (e.key === "ArrowRight") onNextPage();
-            if (e.key === "ArrowLeft") onPrevPage();
+            if (e.key === "ArrowRight") document.getElementById('next').click();
+            if (e.key === "ArrowLeft") document.getElementById('prev').click();
         });
 
-        // --- 4. CARGA INICIAL ---
+        // Resize
+        window.addEventListener('resize', function(){ scale = 1.0; queueRenderPage(pageNum); });
+
+        // Carga Inicial
         pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
             pdfDoc = pdfDoc_;
-            document.getElementById('page-count').textContent = pageNum + " / " + pdfDoc.numPages;
+            document.getElementById('page-total').textContent = "/ " + pdfDoc.numPages;
             renderPage(pageNum);
-        }).catch(function(error){
-            document.getElementById('loader').innerText = "ERROR: No se encontró el PDF. Revisa el nombre del archivo.";
-            console.error(error);
-        });
+        }).catch(function(err) { console.error("Error cargando PDF: " + err); });
 
-        // --- 5. LÓGICA MODAL (Tu código original) ---
+        // --- 5. MODAL INFO ---
         function toggleInfo() {
             var modal = document.getElementById('infoModal');
             var btn = document.getElementById('btn-info');
-            
             if (modal.classList.contains('show')) {
                 modal.classList.remove('show');
                 setTimeout(function() { modal.style.display = 'none'; }, 300); 
-                btn.classList.remove('info-active');
+                btn.classList.remove('active');
             } else {
                 modal.style.display = 'flex';
                 setTimeout(function() { modal.classList.add('show'); }, 10);
-                btn.classList.add('info-active');
+                btn.classList.add('active');
             }
         }
         document.getElementById('btn-info').onclick = toggleInfo;
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('infoModal')) toggleInfo();
-        }
-
-        // Reajustar tamaño si cambian el tamaño de la ventana
-        window.addEventListener('resize', function(){
-            scale = 1.0; // Resetear para recalcular fit
-            queueRenderPage(pageNum);
-        });
+        window.onclick = function(e) { if (e.target == document.getElementById('infoModal')) toggleInfo(); }
 
     </script>
 
