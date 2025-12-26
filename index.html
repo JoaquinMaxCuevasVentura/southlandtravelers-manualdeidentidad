@@ -10,14 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- 2. ICONOS (Themify - Para igualar la estética de tu captura) -->
+    <!-- 2. ICONOS -->
     <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet" type="text/css">
     
     <!-- 3. ESTILOS PDF.JS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf_viewer.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
 
     <style>
-        /* --- VARIABLES DE DISEÑO --- */
+        /* --- VARIABLES --- */
         :root {
             --bg-color: #050505;      
             --accent-color: #dc6b2f;
@@ -40,24 +40,23 @@
             z-index: 0; pointer-events: none;
         }
 
-        /* --- VISOR PRINCIPAL --- */
+        /* --- VISOR --- */
         #pdf-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10;
             display: flex; justify-content: center; align-items: center;
-            overflow: auto; 
-            transition: margin-left 0.3s ease; /* Para animar si abrimos sidebar */
+            overflow: auto;
+            transition: margin-left 0.3s ease;
         }
 
         #page-container {
             position: relative;
             box-shadow: 0 0 60px rgba(0,0,0,0.6);
-            transition: transform 0.2s ease;
         }
 
         canvas { display: block; }
 
-        /* Capa de Links Interactivos */
+        /* Capa de Links */
         .annotationLayer {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
         }
@@ -66,23 +65,18 @@
             box-shadow: 0 0 0 2px var(--accent-color);
         }
 
-        /* --- BARRA DE HERRAMIENTAS (REPLICA EXACTA) --- */
+        /* --- TOOLBAR --- */
         #custom-toolbar {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             z-index: 100;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.0); /* Transparente */
+            background: rgba(0, 0, 0, 0.0);
             padding: 8px 15px;
             gap: 12px;
         }
 
-        .tool-group {
-            display: flex; align-items: center; gap: 5px;
-        }
-        
-        .separator {
-            width: 1px; height: 18px; background: rgba(255,255,255,0.2); margin: 0 5px;
-        }
+        .tool-group { display: flex; align-items: center; gap: 5px; }
+        .separator { width: 1px; height: 18px; background: rgba(255,255,255,0.2); margin: 0 5px; }
 
         .tool-btn {
             background: transparent; border: none; color: var(--text-main);
@@ -97,18 +91,14 @@
             text-shadow: 0 0 10px rgba(220, 107, 47, 0.6);
         }
 
-        /* Input de página estilo dFlip */
         #page-input {
             background: transparent; border: none; 
             color: var(--text-main); font-family: 'Archivo', sans-serif;
-            font-size: 13px; width: 30px; text-align: right;
-            outline: none; font-weight: 600;
+            font-size: 13px; width: 30px; text-align: right; outline: none; font-weight: 600;
         }
-        #page-total {
-            color: var(--text-main); font-size: 13px; opacity: 0.7; font-weight: 400;
-        }
+        #page-total { color: var(--text-main); font-size: 13px; opacity: 0.7; font-weight: 400; }
 
-        /* --- SIDEBAR (INDICE Y MINIATURAS) --- */
+        /* --- SIDEBAR --- */
         #sidebar {
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
@@ -125,43 +115,32 @@
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 12px; letter-spacing: 1px; color: var(--accent-color); text-transform: uppercase;
-            font-weight: 700;
+            font-size: 12px; letter-spacing: 1px; color: var(--accent-color); text-transform: uppercase; font-weight: 700;
         }
-
-        .sidebar-content {
-            flex: 1; overflow-y: auto; padding: 15px;
-        }
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 15px; }
         
-        /* Estilos Índice */
         .outline-item {
             padding: 8px 0; color: #ccc; font-size: 13px; cursor: pointer;
-            transition: 0.2s; text-decoration: none; display: block;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: 0.2s; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .outline-item:hover { color: var(--accent-color); padding-left: 5px; }
         
-        /* Estilos Miniaturas */
-        .thumbnail-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-        }
+        .thumbnail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .thumb-item {
             cursor: pointer; border: 2px solid transparent; transition: 0.2s;
-            border-radius: 4px; overflow: hidden;
+            border-radius: 4px; overflow: hidden; position: relative;
         }
-        .thumb-item img { width: 100%; height: auto; display: block; }
+        .thumb-item canvas { width: 100% !important; height: auto !important; display: block; }
         .thumb-item:hover, .thumb-item.current { border-color: var(--accent-color); }
         .thumb-label { text-align: center; font-size: 10px; color: #666; margin-top: 3px; }
 
-        /* --- MODAL INFO --- */
+        /* --- MODAL --- */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.95); z-index: 9999;
-            justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.3s ease;
+            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;
         }
         .modal-overlay.show { display: flex; opacity: 1; }
-
         .modal-content { color: #fff; max-width: 500px; width: 80%; text-align: center; position: relative; }
         .modal-line { width: 40px; height: 2px; background-color: var(--accent-color); margin: 20px auto; }
         .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 3px; }
@@ -175,27 +154,24 @@
         #loader {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: var(--accent-color); font-size: 12px; letter-spacing: 2px; z-index: 5;
+            text-align: center;
         }
 
-        /* Scrollbar del sidebar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #333; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
-
     </style>
 </head>
 <body>
 
     <div id="grained-container"></div>
-    <div id="loader">CARGANDO DOCUMENTO...</div>
+    <div id="loader">CARGANDO RECURSOS...</div>
 
-    <!-- SIDEBAR (Índice y Miniaturas) -->
+    <!-- SIDEBAR -->
     <div id="sidebar">
         <div class="sidebar-header" id="sidebar-title">NAVEGACIÓN</div>
-        <div class="sidebar-content" id="sidebar-body">
-            <!-- Se llena con JS -->
-        </div>
+        <div class="sidebar-content" id="sidebar-body"></div>
     </div>
 
     <!-- MODAL INFO -->
@@ -208,7 +184,6 @@
             <div class="modal-body">
                 <p>DISEÑO DE IDENTIDAD VISUAL<br>
                 <strong style="color:white; font-size:15px; letter-spacing:1px;">Joaquin Max Cuevas Ventura</strong></p>
-                
                 <div class="modal-contact">
                     2023<br>
                 <div class="modal-note">
@@ -218,7 +193,7 @@
         </div>
     </div>
 
-    <!-- VISOR PDF -->
+    <!-- VISOR -->
     <div id="pdf-wrapper">
         <div id="page-container">
             <canvas id="the-canvas"></canvas>
@@ -226,9 +201,8 @@
         </div>
     </div>
 
-    <!-- BARRA DE HERRAMIENTAS (REPLICA EXACTA) -->
+    <!-- TOOLBAR -->
     <div id="custom-toolbar">
-        <!-- Grupo Navegación -->
         <div class="tool-group">
             <button class="tool-btn" id="prev" title="Anterior"><i class="ti-angle-left"></i></button>
             <div style="display:flex; align-items:center; padding: 0 5px;">
@@ -237,29 +211,19 @@
             </div>
             <button class="tool-btn" id="next" title="Siguiente"><i class="ti-angle-right"></i></button>
         </div>
-
         <div class="separator"></div>
-
-        <!-- Grupo Paneles -->
         <div class="tool-group">
-            <button class="tool-btn" id="btn-outline" title="Índice (Tabla de Contenido)"><i class="ti-list"></i></button>
-            <button class="tool-btn" id="btn-thumbs" title="Vistas en Miniatura"><i class="ti-layout-grid2"></i></button>
+            <button class="tool-btn" id="btn-outline" title="Índice"><i class="ti-list"></i></button>
+            <button class="tool-btn" id="btn-thumbs" title="Miniaturas"><i class="ti-layout-grid2"></i></button>
         </div>
-
         <div class="separator"></div>
-
-        <!-- Grupo Zoom -->
         <div class="tool-group">
             <button class="tool-btn" id="zoom-in" title="Acercar"><i class="ti-zoom-in"></i></button>
             <button class="tool-btn" id="zoom-out" title="Alejar"><i class="ti-zoom-out"></i></button>
         </div>
-
-        <!-- Grupo Pantalla -->
         <div class="tool-group">
             <button class="tool-btn" id="btn-fullscreen" title="Pantalla Completa"><i class="ti-fullscreen"></i></button>
         </div>
-        
-        <!-- Grupo Info -->
         <div class="tool-group">
              <button class="tool-btn" id="btn-info" title="Información"><i class="ti-info-alt"></i></button>
         </div>
@@ -268,10 +232,11 @@
     <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/grained/0.0.2/grained.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Actualizado a versión 3.11 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <script>
-        // --- 1. CONFIGURACIÓN DEL GRANO ---
+        // --- 1. GRANO ---
         try {
             grained('#grained-container', {
                 "animate": true, "patternWidth": 100, "patternHeight": 100,
@@ -279,12 +244,12 @@
             });
         } catch(e) {}
 
-        // --- 2. MOTOR PDF.JS ---
+        // --- 2. CONFIGURACIÓN PDF ---
         
-        // ! CAMBIA ESTO POR TU ARCHIVO PDF
-        var url = 'Manual de identidad corporativa_Soutland Travelers.pdf';
+        // ¡RENOMBRA TU ARCHIVO A: manual.pdf!
+        var url = 'manual.pdf';
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         var pdfDoc = null,
             pageNum = 1,
@@ -297,9 +262,8 @@
             pageContainer = document.getElementById('page-container'),
             wrapper = document.getElementById('pdf-wrapper');
 
-        var sidebarState = 'closed'; // closed, outline, thumbs
+        var sidebarState = 'closed';
 
-        // AJUSTAR A PANTALLA
         function getFitScale(page) {
             var viewport = page.getViewport({scale: 1});
             var wRatio = (wrapper.clientWidth * 0.90) / viewport.width;
@@ -307,10 +271,8 @@
             return Math.min(wRatio, hRatio);
         }
 
-        // RENDERIZAR PÁGINA PRINCIPAL
         function renderPage(num) {
             pageRendering = true;
-            
             pdfDoc.getPage(num).then(function(page) {
                 if(scale === 1.0) scale = getFitScale(page);
 
@@ -327,8 +289,6 @@
                     pageRendering = false;
                     document.getElementById('loader').style.display = 'none';
                     annotationDiv.innerHTML = ''; 
-
-                    // Renderizar Links Interactivos
                     return page.getAnnotations();
                 }).then(function(annotations) {
                     if (annotations && annotations.length > 0) {
@@ -354,23 +314,31 @@
                     }
                     if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
                 });
+            }).catch(function(err){
+                console.error(err);
+                document.getElementById('loader').innerText = "ERROR AL RENDERIZAR PÁGINA: " + err.message;
             });
 
-            // Actualizar UI
             document.getElementById('page-input').value = num;
-            document.getElementById('page-total').textContent = "/ " + pdfDoc.numPages;
-            
-            // Actualizar sidebar si está abierto en miniaturas
             if(sidebarState === 'thumbs') highlightCurrentThumb();
         }
 
         function goToDestination(dest) {
-            pdfDoc.getPageIndex(dest[0]).then(function(pageIndex) {
+            if(!dest) return;
+            // Manejo seguro de destinos
+            var destRef = null;
+            if (Array.isArray(dest)) {
+                destRef = dest[0]; 
+            } else {
+                destRef = dest;
+            }
+
+            pdfDoc.getPageIndex(destRef).then(function(pageIndex) {
                 var newPage = pageIndex + 1;
                 if(newPage !== pageNum) {
                     pageNum = newPage; queueRenderPage(pageNum);
                 }
-            });
+            }).catch(function(){ console.log("Destino no es una referencia de página directa"); });
         }
 
         function queueRenderPage(num) {
@@ -378,20 +346,17 @@
             else renderPage(num);
         }
 
-        // --- 3. FUNCIONES DEL SIDEBAR (Índice y Miniaturas) ---
-
-        // GENERAR ÍNDICE (OUTLINE)
+        // --- SIDEBAR ---
         function renderOutline() {
             var container = document.getElementById('sidebar-body');
             container.innerHTML = '';
-            document.getElementById('sidebar-title').innerText = "ÍNDICE DE CONTENIDOS";
+            document.getElementById('sidebar-title').innerText = "ÍNDICE";
 
             pdfDoc.getOutline().then(function(outline) {
                 if (!outline) {
-                    container.innerHTML = '<div style="color:#666; font-size:12px; text-align:center; margin-top:20px;">Este documento no tiene índice estructurado.</div>';
+                    container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Sin índice.</div>';
                     return;
                 }
-                
                 outline.forEach(function(item) {
                     var div = document.createElement('div');
                     div.className = 'outline-item';
@@ -406,54 +371,38 @@
             });
         }
 
-        // GENERAR MINIATURAS (THUMBNAILS)
         function renderThumbnails() {
             var container = document.getElementById('sidebar-body');
             container.innerHTML = '';
-            document.getElementById('sidebar-title').innerText = "VISTA DE PÁGINAS";
-            
+            document.getElementById('sidebar-title').innerText = "VISTA PREVIA";
             var grid = document.createElement('div');
             grid.className = 'thumbnail-grid';
             container.appendChild(grid);
 
-            // Loop simple para generar miniaturas
             for (let i = 1; i <= pdfDoc.numPages; i++) {
-                (function(pageNumIndex) {
-                    var thumbItem = document.createElement('div');
-                    thumbItem.className = 'thumb-item';
-                    if(pageNumIndex === pageNum) thumbItem.classList.add('current');
-                    thumbItem.id = 'thumb-' + pageNumIndex;
+                (function(idx) {
+                    var item = document.createElement('div');
+                    item.className = 'thumb-item';
+                    item.id = 'thumb-' + idx;
+                    if(idx === pageNum) item.classList.add('current');
                     
-                    // Canvas pequeño
-                    var thumbCanvas = document.createElement('canvas');
-                    var thumbCtx = thumbCanvas.getContext('2d');
+                    var cvs = document.createElement('canvas');
+                    var cx = cvs.getContext('2d');
+                    item.appendChild(cvs);
                     
-                    thumbItem.appendChild(thumbCanvas);
-                    
-                    var label = document.createElement('div');
-                    label.className = 'thumb-label';
-                    label.innerText = pageNumIndex;
-                    thumbItem.appendChild(label);
-                    
-                    thumbItem.onclick = function() {
-                        pageNum = pageNumIndex;
-                        queueRenderPage(pageNum);
-                    };
+                    var lbl = document.createElement('div');
+                    lbl.className = 'thumb-label';
+                    lbl.innerText = idx;
+                    item.appendChild(lbl);
 
-                    grid.appendChild(thumbItem);
+                    item.onclick = function() { pageNum = idx; queueRenderPage(pageNum); };
+                    grid.appendChild(item);
 
-                    // Renderizar miniatura (Lazyish)
-                    pdfDoc.getPage(pageNumIndex).then(function(page) {
-                        var viewport = page.getViewport({ scale: 0.15 }); // Escala pequeña
-                        thumbCanvas.height = viewport.height;
-                        thumbCanvas.width = viewport.width;
-                        
-                        page.render({
-                            canvasContext: thumbCtx,
-                            viewport: viewport
-                        });
+                    pdfDoc.getPage(idx).then(function(p) {
+                        var vp = p.getViewport({ scale: 0.15 });
+                        cvs.width = vp.width; cvs.height = vp.height;
+                        p.render({ canvasContext: cx, viewport: vp });
                     });
-
                 })(i);
             }
         }
@@ -468,37 +417,24 @@
             }
         }
 
-        // TOGGLE SIDEBAR
         function toggleSidebar(mode) {
             var sidebar = document.getElementById('sidebar');
-            var btnOutline = document.getElementById('btn-outline');
-            var btnThumbs = document.getElementById('btn-thumbs');
+            var btnO = document.getElementById('btn-outline');
+            var btnT = document.getElementById('btn-thumbs');
 
-            // Si ya está abierto en el mismo modo, cerrar
             if (sidebarState === mode) {
                 sidebar.classList.remove('open');
                 sidebarState = 'closed';
-                btnOutline.classList.remove('active');
-                btnThumbs.classList.remove('active');
+                btnO.classList.remove('active'); btnT.classList.remove('active');
             } else {
-                // Abrir o cambiar modo
-                if(mode === 'outline') {
-                    renderOutline();
-                    btnOutline.classList.add('active');
-                    btnThumbs.classList.remove('active');
-                } else {
-                    renderThumbnails();
-                    btnThumbs.classList.add('active');
-                    btnOutline.classList.remove('active');
-                }
+                if(mode === 'outline') { renderOutline(); btnO.classList.add('active'); btnT.classList.remove('active'); }
+                else { renderThumbnails(); btnT.classList.add('active'); btnO.classList.remove('active'); }
                 sidebar.classList.add('open');
                 sidebarState = mode;
             }
         }
 
-        // --- 4. EVENTOS DE CONTROL ---
-        
-        // Botones Toolbar
+        // --- EVENTOS ---
         document.getElementById('prev').onclick = function() { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); };
         document.getElementById('next').onclick = function() { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); };
         document.getElementById('zoom-in').onclick = function() { scale += 0.2; queueRenderPage(pageNum); };
@@ -512,33 +448,40 @@
         document.getElementById('btn-outline').onclick = function() { toggleSidebar('outline'); };
         document.getElementById('btn-thumbs').onclick = function() { toggleSidebar('thumbs'); };
 
-        // Input de página (Enter para ir)
-        document.getElementById('page-input').addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
+        document.getElementById('page-input').addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
                 var val = parseInt(this.value);
-                if (val >= 1 && val <= pdfDoc.numPages) {
-                    pageNum = val; queueRenderPage(pageNum);
-                }
+                if (val >= 1 && val <= pdfDoc.numPages) { pageNum = val; queueRenderPage(pageNum); }
             }
         });
 
-        // Teclado
         document.addEventListener('keydown', function(e) {
             if (e.key === "ArrowRight") document.getElementById('next').click();
             if (e.key === "ArrowLeft") document.getElementById('prev').click();
         });
 
-        // Resize
         window.addEventListener('resize', function(){ scale = 1.0; queueRenderPage(pageNum); });
 
-        // Carga Inicial
+        // --- INICIALIZAR ---
         pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
             pdfDoc = pdfDoc_;
             document.getElementById('page-total').textContent = "/ " + pdfDoc.numPages;
             renderPage(pageNum);
-        }).catch(function(err) { console.error("Error cargando PDF: " + err); });
+        }).catch(function(err) {
+            // MUESTRA EL ERROR EN PANTALLA
+            var msg = "ERROR: No se pudo cargar el archivo PDF.<br><br>";
+            if(err.name === 'MissingPDFException') {
+                msg += "No se encuentra el archivo 'manual.pdf'.<br>Asegúrate de que el archivo está en la misma carpeta y renombrado.";
+            } else if (err.name === 'UnknownErrorException' && window.location.protocol === 'file:') {
+                msg += "Bloqueo de seguridad CORS detectado.<br>No puedes abrir el HTML con doble clic.<br>Usa 'Live Server' en VS Code.";
+            } else {
+                msg += err.message;
+            }
+            document.getElementById('loader').innerHTML = msg;
+            document.getElementById('loader').style.color = 'red';
+            console.error(err);
+        });
 
-        // --- 5. MODAL INFO ---
         function toggleInfo() {
             var modal = document.getElementById('infoModal');
             var btn = document.getElementById('btn-info');
@@ -556,6 +499,5 @@
         window.onclick = function(e) { if (e.target == document.getElementById('infoModal')) toggleInfo(); }
 
     </script>
-
 </body>
 </html>
