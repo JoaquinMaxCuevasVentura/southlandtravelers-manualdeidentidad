@@ -5,200 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SOUTHLAND TRAVELERS | Manual de identidad corporativa</title>
 
-    <!-- 1. FUENTES -->
+    <!-- 1. FUENTE ARCHIVO -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- 2. ICONOS -->
+    <!-- 2. ESTILOS DFLIP -->
+    <link href="https://cdn.jsdelivr.net/npm/dflip/css/dflip.min.css" rel="stylesheet" type="text/css">
     <link href="https://cdn.jsdelivr.net/npm/dflip/css/themify-icons.min.css" rel="stylesheet" type="text/css">
-    
-    <!-- 3. ESTILOS PDF.JS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
 
     <style>
-        /* --- VARIABLES --- */
+        /* --- CONFIGURACIÓN VISUAL (TU PORTFOLIO) --- */
         :root {
             --bg-color: #050505;      
-            --accent-color: #dc6b2f;
+            --accent-color: #dc6b2f; 
             --text-main: #FFFFFF;     
-            --ui-opacity: 0.8;
-            --sidebar-width: 280px;
+            --ui-opacity: 0.7;
         }
 
         body, html {
-            height: 100%; margin: 0;
+            height: 100%;
+            margin: 0;
             background-color: var(--bg-color);
             font-family: 'Archivo', sans-serif !important;
             overflow: hidden;
-            user-select: none;
         }
 
-        /* FONDO */
+        /* Capa de Ruido (Fondo) */
         #grained-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; 
+            pointer-events: none;
         }
 
-        /* --- VISOR --- */
-        #pdf-wrapper {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            display: flex; justify-content: center; align-items: center;
-            overflow: auto;
-            transition: margin-left 0.3s ease;
-        }
-
-        #page-container {
+        /* Capa del Libro */
+        #flipbook-container {
+            height: 100vh;
+            width: 100vw;
             position: relative;
-            box-shadow: 0 0 60px rgba(0,0,0,0.6);
+            z-index: 10; 
         }
 
-        canvas { display: block; }
-
-        /* Capa de Links */
-        .annotationLayer {
-            position: absolute; 
-            top: 0; 
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: auto;
-        }
-        
-        .annotationLayer section {
-            position: absolute;
-            cursor: pointer;
-        }
-        
-        .annotationLayer .linkAnnotation > a {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 1;
-        }
-        
-        .annotationLayer .linkAnnotation > a:hover {
-            background: rgba(220, 107, 47, 0.15);
-            box-shadow: 0 0 0 2px var(--accent-color);
-            border-radius: 2px;
+        /* --- UI MINIMALISTA --- */
+        .df-ui-wrapper {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding-bottom: 30px !important;
         }
 
-        /* --- TOOLBAR --- */
-        #custom-toolbar {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 100;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.0);
-            padding: 8px 15px;
-            gap: 12px;
+        .df-ui-btn {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: var(--text-main) !important;
+            border-radius: 0 !important;
+            margin: 0 8px !important;
+            transition: all 0.2s ease;
+            opacity: var(--ui-opacity);
+            width: auto !important; height: auto !important;
         }
 
-        .tool-group { display: flex; align-items: center; gap: 5px; }
-        .separator { width: 1px; height: 18px; background: rgba(255,255,255,0.2); margin: 0 5px; }
-
-        .tool-btn {
-            background: transparent; border: none; color: var(--text-main);
-            font-size: 18px; cursor: pointer; opacity: var(--ui-opacity);
-            transition: all 0.2s ease; padding: 6px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 4px;
+        /* Interacción (Tu Naranja) */
+        .df-ui-btn:hover, .df-ui-btn.active, .df-ui-btn.info-active {
+            color: var(--accent-color) !important;
+            background: transparent !important;
+            opacity: 1 !important;
+            transform: scale(1.3);
+            text-shadow: 0 0 10px rgba(220, 107, 47, 0.5);
         }
 
-        .tool-btn:hover, .tool-btn.active {
-            color: var(--accent-color); transform: scale(1.15); opacity: 1;
-            text-shadow: 0 0 10px rgba(220, 107, 47, 0.6);
+        /* Corrección input folio */
+        .df-ui-page input {
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-main) !important;
+            font-family: 'Archivo', sans-serif !important;
+            font-size: 12px !important;
+            text-align: center !important;
+            box-shadow: none !important;
         }
 
-        #page-input {
-            background: transparent; border: none; 
-            color: var(--text-main); font-family: 'Archivo', sans-serif;
-            font-size: 13px; width: 30px; text-align: right; outline: none; font-weight: 600;
-        }
-        #page-total { color: var(--text-main); font-size: 13px; opacity: 0.7; font-weight: 400; }
+        /* Ocultar elementos innecesarios */
+        .df-page-content .df-link, .df-page-content a { opacity: 0 !important; pointer-events: none; }
 
-        /* --- SIDEBAR --- */
-        #sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-width);
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 90;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            display: flex; flex-direction: column;
-        }
-        #sidebar.open { transform: translateX(0); }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 12px; letter-spacing: 1px; color: var(--accent-color); text-transform: uppercase; font-weight: 700;
-        }
-        .sidebar-content { flex: 1; overflow-y: auto; padding: 15px; }
-        
-        .outline-item {
-            padding: 8px 0; color: #ccc; font-size: 13px; cursor: pointer;
-            transition: 0.2s; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .outline-item:hover { color: var(--accent-color); padding-left: 5px; }
-        
-        .thumbnail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .thumb-item {
-            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
-            border-radius: 4px; overflow: hidden; position: relative;
-        }
-        .thumb-item canvas { width: 100% !important; height: auto !important; display: block; }
-        .thumb-item:hover, .thumb-item.current { border-color: var(--accent-color); }
-        .thumb-label { text-align: center; font-size: 10px; color: #666; margin-top: 3px; }
-
-        /* --- MODAL --- */
+        /* --- VENTANA MODAL INFO --- */
         .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95); z-index: 9999;
-            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); 
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         .modal-overlay.show { display: flex; opacity: 1; }
-        .modal-content { color: #fff; max-width: 500px; width: 80%; text-align: center; position: relative; }
+
+        .modal-content {
+            color: #fff;
+            max-width: 500px;
+            width: 80%;
+            text-align: center;
+            position: relative;
+        }
+        
         .modal-line { width: 40px; height: 2px; background-color: var(--accent-color); margin: 20px auto; }
         .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 3px; }
         .modal-subtitle { font-size: 11px; color: var(--accent-color); margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
         .modal-body { font-size: 14px; color: #ccc; line-height: 1.6; font-weight: 300; }
-        .modal-contact { margin-top: 15px; font-size: 12px; color: #fff; opacity: 0.8; letter-spacing: 0.5px; }
-        .modal-note { margin-top: 30px; font-size: 10px; color: #666; border-top: 1px solid #222; padding-top: 15px; }
-        .close-modal { position: absolute; top: -50px; right: 0; color: #666; font-size: 30px; cursor: pointer; }
-        .close-modal:hover { color: var(--accent-color); }
-
-        #loader {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--accent-color); font-size: 12px; letter-spacing: 2px; z-index: 5;
-            text-align: center;
+        
+        .modal-contact {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #fff;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
         }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+        .modal-note { margin-top: 30px; font-size: 10px; color: #666; border-top: 1px solid #222; padding-top: 15px; }
+        
+        .close-modal { position: absolute; top: -50px; right: 0; color: #666; font-size: 30px; cursor: pointer; transition: 0.2s; font-weight: 100; font-family: sans-serif; }
+        .close-modal:hover { color: var(--accent-color); }
+        .ti-info-custom:before { content: "\e645"; } 
+
     </style>
 </head>
 <body>
 
+    <!-- FONDO -->
     <div id="grained-container"></div>
-    <div id="loader">CARGANDO RECURSOS...</div>
 
-    <!-- SIDEBAR -->
-    <div id="sidebar">
-        <div class="sidebar-header" id="sidebar-title">NAVEGACIÓN</div>
-        <div class="sidebar-content" id="sidebar-body"></div>
-    </div>
-
-    <!-- MODAL INFO -->
+    <!-- MODAL INFO (Datos Profesionales) -->
     <div id="infoModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleInfo()">✕</span>
@@ -208,9 +148,9 @@
             <div class="modal-body">
                 <p>DISEÑO DE IDENTIDAD VISUAL<br>
                 <strong style="color:white; font-size:15px; letter-spacing:1px;">Joaquin Max Cuevas Ventura</strong></p>
+                
                 <div class="modal-contact">
-                    2023
-                </div>
+                    2023<br>
                 <div class="modal-note">
                     Nota: Proyecto profesional de identidad visual corporativa para Southland Travelers, agencia de turismo con enfoque en Sudamérica. Este manual sistematiza los activos intangibles de la marca para garantizar su coherencia sistémica en todos los medios comunicativos.
                 </div>
@@ -218,478 +158,86 @@
         </div>
     </div>
 
-    <!-- VISOR -->
-    <div id="pdf-wrapper">
-        <div id="page-container">
-            <canvas id="the-canvas"></canvas>
-            <div id="annotation-layer" class="annotationLayer"></div>
-        </div>
-    </div>
+    <!-- LIBRO -->
+    <div id="flipbook-container"></div>
 
-    <!-- TOOLBAR -->
-    <div id="custom-toolbar">
-        <div class="tool-group">
-            <button class="tool-btn" id="prev" title="Anterior"><i class="ti-angle-left"></i></button>
-            <div style="display:flex; align-items:center; padding: 0 5px;">
-                <input type="text" id="page-input" value="1">
-                <span id="page-total">/ 00</span>
-            </div>
-            <button class="tool-btn" id="next" title="Siguiente"><i class="ti-angle-right"></i></button>
-        </div>
-        <div class="separator"></div>
-        <div class="tool-group">
-            <button class="tool-btn" id="btn-outline" title="Índice"><i class="ti-list"></i></button>
-            <button class="tool-btn" id="btn-thumbs" title="Miniaturas"><i class="ti-layout-grid2"></i></button>
-        </div>
-        <div class="separator"></div>
-        <div class="tool-group">
-            <button class="tool-btn" id="zoom-in" title="Acercar"><i class="ti-zoom-in"></i></button>
-            <button class="tool-btn" id="zoom-out" title="Alejar"><i class="ti-zoom-out"></i></button>
-        </div>
-        <div class="tool-group">
-            <button class="tool-btn" id="btn-fullscreen" title="Pantalla Completa"><i class="ti-fullscreen"></i></button>
-        </div>
-        <div class="tool-group">
-             <button class="tool-btn" id="btn-info" title="Información"><i class="ti-info-alt"></i></button>
-        </div>
-    </div>
-
-    <!-- SCRIPTS -->
+    <!-- 3. SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dflip/js/dflip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/grained/0.0.2/grained.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <script>
-        // --- 1. GRANO ---
+        // 1. INICIAR EL GRANO
         try {
             grained('#grained-container', {
-                "animate": true, "patternWidth": 100, "patternHeight": 100,
-                "grainOpacity": 0.05, "grainDensity": 1, "grainWidth": 1, "grainHeight": 1
+                "animate": true,
+                "patternWidth": 100,
+                "patternHeight": 100,
+                "grainOpacity": 0.05,
+                "grainDensity": 1,
+                "grainWidth": 1,
+                "grainHeight": 1
             });
-        } catch(e) { console.log('Grained no disponible'); }
+        } catch(e) { console.log("Error grano"); }
 
-        // --- 2. CONFIGURACIÓN PDF ---
-        var url = 'Manual de identidad corporativa_Soutland Travelers.pdf';
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        var pdfDoc = null,
-            pageNum = 1,
-            pageRendering = false,
-            pageNumPending = null,
-            scale = 1.0,
-            canvas = document.getElementById('the-canvas'),
-            ctx = canvas.getContext('2d'),
-            annotationDiv = document.getElementById('annotation-layer'),
-            pageContainer = document.getElementById('page-container'),
-            wrapper = document.getElementById('pdf-wrapper'),
-            currentPage = null;
-
-        var sidebarState = 'closed';
-
-        // Servicio de enlaces personalizado
-        var customLinkService = {
-            pdfDocument: null,
-            
-            getDestinationHash: function(dest) {
-                return '#';
-            },
-            
-            getAnchorUrl: function(hash) {
-                return '#';
-            },
-            
-            setHash: function(hash) {},
-            
-            executeNamedAction: function(action) {
-                console.log('Named action:', action);
-            },
-            
-            executeSetOCGState: function(action) {},
-            
-            navigateTo: function(dest) {
-                if (!dest) return;
-                goToDestination(dest);
-            },
-            
-            goToDestination: function(dest) {
-                if (!dest) return;
-                goToDestination(dest);
-            },
-            
-            addLinkAttributes: function(link, url, newWindow) {
-                // Para enlaces externos
-                if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
-                    link.href = url;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                }
-            }
-        };
-
-        function getFitScale(page) {
-            var viewport = page.getViewport({scale: 1});
-            var wRatio = (wrapper.clientWidth * 0.90) / viewport.width;
-            var hRatio = (wrapper.clientHeight * 0.90) / viewport.height;
-            return Math.min(wRatio, hRatio);
-        }
-
-        function renderPage(num) {
-            pageRendering = true;
-            
-            pdfDoc.getPage(num).then(function(page) {
-                currentPage = page;
-                
-                if(scale === 1.0) scale = getFitScale(page);
-
-                var viewport = page.getViewport({scale: scale});
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                pageContainer.style.width = viewport.width + 'px';
-                pageContainer.style.height = viewport.height + 'px';
-
-                var renderContext = { 
-                    canvasContext: ctx, 
-                    viewport: viewport 
-                };
-                
-                var renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    document.getElementById('loader').style.display = 'none';
-                    
-                    // Limpiar anotaciones anteriores
-                    annotationDiv.innerHTML = '';
-                    
-                    // Renderizar anotaciones (enlaces)
-                    return page.getAnnotations();
-                }).then(function(annotations) {
-                    if (annotations && annotations.length > 0) {
-                        var viewportClone = viewport.clone({ dontFlip: true });
-                        
-                        // Renderizar la capa de anotaciones
-                        pdfjsLib.AnnotationLayer.render({
-                            viewport: viewportClone,
-                            div: annotationDiv,
-                            annotations: annotations,
-                            page: page,
-                            linkService: customLinkService,
-                            downloadManager: null,
-                            annotationStorage: null,
-                            renderInteractiveForms: false
-                        });
-                        
-                        // Interceptar clics en los enlaces para navegación interna
-                        setTimeout(function() {
-                            var links = annotationDiv.querySelectorAll('a');
-                            links.forEach(function(link) {
-                                var href = link.getAttribute('href');
-                                
-                                // Si es un enlace interno (empieza con #)
-                                if (href && href.startsWith('#')) {
-                                    link.addEventListener('click', function(e) {
-                                        e.preventDefault();
-                                        
-                                        // Buscar la anotación correspondiente
-                                        for (var i = 0; i < annotations.length; i++) {
-                                            var ann = annotations[i];
-                                            if (ann.subtype === 'Link' && ann.dest) {
-                                                // Verificar si este es el enlace clickeado
-                                                var linkElement = link.closest('section');
-                                                if (linkElement && linkElement.dataset.annotationId === ann.id) {
-                                                    goToDestination(ann.dest);
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        }, 100);
-                    }
-                    
-                    if (pageNumPending !== null) { 
-                        renderPage(pageNumPending); 
-                        pageNumPending = null; 
-                    }
-                }).catch(function(err) {
-                    console.warn('Error en anotaciones:', err);
-                    pageRendering = false;
-                    if (pageNumPending !== null) { 
-                        renderPage(pageNumPending); 
-                        pageNumPending = null; 
-                    }
-                });
-            }).catch(function(err){
-                console.error('Error al renderizar:', err);
-                document.getElementById('loader').innerHTML = "ERROR AL RENDERIZAR PÁGINA: " + err.message;
-                pageRendering = false;
-            });
-
-            document.getElementById('page-input').value = num;
-            if(sidebarState === 'thumbs') highlightCurrentThumb();
-        }
-
-        function goToDestination(dest) {
-            if(!dest || !pdfDoc) return;
-            
-            // Si el destino es un string (nombre), resolverlo primero
-            if (typeof dest === 'string') {
-                pdfDoc.getDestination(dest).then(function(destArray) {
-                    if (destArray && destArray.length > 0) {
-                        navigateToPage(destArray[0]);
-                    }
-                }).catch(function(err) {
-                    console.log('No se pudo resolver el destino:', err);
-                });
-            } 
-            // Si el destino ya es un array
-            else if (Array.isArray(dest) && dest.length > 0) {
-                navigateToPage(dest[0]);
-            }
-        }
-
-        function navigateToPage(pageRef) {
-            if (!pageRef || !pdfDoc) return;
-            
-            // Si pageRef es un número, ir directamente
-            if (typeof pageRef === 'number') {
-                var newPage = pageRef;
-                if (newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
-                    pageNum = newPage;
-                    queueRenderPage(pageNum);
-                }
-                return;
-            }
-            
-            // Si es una referencia de objeto, obtener el índice de página
-            pdfDoc.getPageIndex(pageRef).then(function(pageIndex) {
-                var newPage = pageIndex + 1;
-                if (newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
-                    pageNum = newPage;
-                    queueRenderPage(pageNum);
-                }
-            }).catch(function(err) {
-                console.log("Error al navegar a la página:", err);
-            });
-        }
-
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        // --- SIDEBAR ---
-        function renderOutline() {
-            var container = document.getElementById('sidebar-body');
-            container.innerHTML = '';
-            document.getElementById('sidebar-title').innerText = "ÍNDICE";
-
-            pdfDoc.getOutline().then(function(outline) {
-                if (!outline || outline.length === 0) {
-                    container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Sin índice.</div>';
-                    return;
-                }
-                
-                outline.forEach(function(item) {
-                    var div = document.createElement('div');
-                    div.className = 'outline-item';
-                    div.innerText = item.title;
-                    div.onclick = function() {
-                        goToDestination(item.dest);
-                    };
-                    container.appendChild(div);
-                });
-            }).catch(function(err) {
-                console.error('Error al cargar índice:', err);
-                container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Error al cargar índice.</div>';
-            });
-        }
-
-        function renderThumbnails() {
-            var container = document.getElementById('sidebar-body');
-            container.innerHTML = '';
-            document.getElementById('sidebar-title').innerText = "VISTA PREVIA";
-            var grid = document.createElement('div');
-            grid.className = 'thumbnail-grid';
-            container.appendChild(grid);
-
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
-                (function(idx) {
-                    var item = document.createElement('div');
-                    item.className = 'thumb-item';
-                    item.id = 'thumb-' + idx;
-                    if(idx === pageNum) item.classList.add('current');
-                    
-                    var cvs = document.createElement('canvas');
-                    var cx = cvs.getContext('2d');
-                    item.appendChild(cvs);
-                    
-                    var lbl = document.createElement('div');
-                    lbl.className = 'thumb-label';
-                    lbl.innerText = idx;
-                    item.appendChild(lbl);
-
-                    item.onclick = function() { 
-                        pageNum = idx; 
-                        queueRenderPage(pageNum); 
-                    };
-                    grid.appendChild(item);
-
-                    pdfDoc.getPage(idx).then(function(p) {
-                        var vp = p.getViewport({ scale: 0.15 });
-                        cvs.width = vp.width; 
-                        cvs.height = vp.height;
-                        p.render({ canvasContext: cx, viewport: vp });
-                    }).catch(function(err) {
-                        console.error('Error al renderizar miniatura:', err);
-                    });
-                })(i);
-            }
-        }
-
-        function highlightCurrentThumb() {
-            var prev = document.querySelector('.thumb-item.current');
-            if(prev) prev.classList.remove('current');
-            var curr = document.getElementById('thumb-' + pageNum);
-            if(curr) {
-                curr.classList.add('current');
-                curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        function toggleSidebar(mode) {
-            var sidebar = document.getElementById('sidebar');
-            var btnO = document.getElementById('btn-outline');
-            var btnT = document.getElementById('btn-thumbs');
-
-            if (sidebarState === mode) {
-                sidebar.classList.remove('open');
-                sidebarState = 'closed';
-                btnO.classList.remove('active'); 
-                btnT.classList.remove('active');
-            } else {
-                if(mode === 'outline') { 
-                    renderOutline(); 
-                    btnO.classList.add('active'); 
-                    btnT.classList.remove('active'); 
-                } else { 
-                    renderThumbnails(); 
-                    btnT.classList.add('active'); 
-                    btnO.classList.remove('active'); 
-                }
-                sidebar.classList.add('open');
-                sidebarState = mode;
-            }
-        }
-
-        // --- EVENTOS ---
-        document.getElementById('prev').onclick = function() { 
-            if (pageNum <= 1) return; 
-            pageNum--; 
-            queueRenderPage(pageNum); 
-        };
-        
-        document.getElementById('next').onclick = function() { 
-            if (pageNum >= pdfDoc.numPages) return; 
-            pageNum++; 
-            queueRenderPage(pageNum); 
-        };
-        
-        document.getElementById('zoom-in').onclick = function() { 
-            scale += 0.2; 
-            queueRenderPage(pageNum); 
-        };
-        
-        document.getElementById('zoom-out').onclick = function() { 
-            if(scale <= 0.4) return; 
-            scale -= 0.2; 
-            queueRenderPage(pageNum); 
-        };
-        
-        document.getElementById('btn-fullscreen').onclick = function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(function(err) {
-                    console.log('Error al activar pantalla completa:', err);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        };
-
-        document.getElementById('btn-outline').onclick = function() { toggleSidebar('outline'); };
-        document.getElementById('btn-thumbs').onclick = function() { toggleSidebar('thumbs'); };
-
-        document.getElementById('page-input').addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                var val = parseInt(this.value);
-                if (val >= 1 && val <= pdfDoc.numPages) { 
-                    pageNum = val; 
-                    queueRenderPage(pageNum); 
-                } else {
-                    this.value = pageNum;
-                }
-            }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === "ArrowRight") document.getElementById('next').click();
-            if (e.key === "ArrowLeft") document.getElementById('prev').click();
-        });
-
-        window.addEventListener('resize', function(){ 
-            scale = 1.0; 
-            queueRenderPage(pageNum); 
-        });
-
-        // --- INICIALIZAR ---
-        pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
-            pdfDoc = pdfDoc_;
-            customLinkService.pdfDocument = pdfDoc;
-            
-            document.getElementById('page-total').textContent = "/ " + (pdfDoc.numPages < 10 ? '0' : '') + pdfDoc.numPages;
-            renderPage(pageNum);
-        }).catch(function(err) {
-            var msg = "ERROR: No se pudo cargar el archivo PDF.<br><br>";
-            if(err.name === 'MissingPDFException') {
-                msg += "No se encuentra el archivo 'Manual de identidad corporativa_Soutland Travelers.pdf'.<br>Asegúrate de que el archivo está en la misma carpeta.";
-            } else if (err.message && err.message.includes('CORS')) {
-                msg += "Bloqueo de seguridad CORS detectado.<br>No puedes abrir el HTML con doble clic.<br>Usa 'Live Server' en VS Code o un servidor local.";
-            } else {
-                msg += err.message || 'Error desconocido';
-            }
-            document.getElementById('loader').innerHTML = msg;
-            document.getElementById('loader').style.color = '#dc6b2f';
-            console.error('Error detallado:', err);
-        });
-
+        // 2. FUNCIONES MODAL
         function toggleInfo() {
             var modal = document.getElementById('infoModal');
-            var btn = document.getElementById('btn-info');
+            var btn = document.getElementById('btn-info-custom');
+            
             if (modal.classList.contains('show')) {
                 modal.classList.remove('show');
                 setTimeout(function() { modal.style.display = 'none'; }, 300); 
-                btn.classList.remove('active');
+                if(btn) btn.classList.remove('info-active');
             } else {
                 modal.style.display = 'flex';
                 setTimeout(function() { modal.classList.add('show'); }, 10);
-                btn.classList.add('active');
+                if(btn) btn.classList.add('info-active');
             }
         }
-        
-        document.getElementById('btn-info').onclick = toggleInfo;
-        
-        window.onclick = function(e) { 
-            if (e.target == document.getElementById('infoModal')) {
-                toggleInfo(); 
-            }
-        };
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('infoModal')) toggleInfo();
+        }
+
+        // 3. INICIAR LIBRO
+        jQuery(document).ready(function() {
+            
+            // CAMBIAR POR EL NOMBRE REAL DEL PDF
+            var pdfName = "Manual de identidad corporativa_Soutland Travelers.pdf";
+
+            var bookOptions = {
+                source: pdfName,
+                webgl: true,
+                height: "100%",
+                duration: 800, 
+                backgroundColor: "transparent", 
+                disableFolderPath: true,
+
+                text: {
+                    toggleSound: "SONIDO",
+                    toggleThumbnails: "VISTA",
+                    toggleOutline: "INDICE",
+                    previousPage: "ANT",
+                    nextPage: "SIG",
+                    toggleFullscreen: "FULL",
+                    zoomIn: "ZOOM +",
+                    zoomOut: "ZOOM -"
+                },
+                
+                allControls: "altPrev,pageNumber,altNext,play,outline,thumbnail,zoomIn,zoomOut,fullScreen",
+                hideControls: "share,download,more", 
+
+                onReady: function(scene) {
+                    var infoBtn = $('<div class="df-ui-btn df-ui-info" id="btn-info-custom" title="INFORMACIÓN"><i class="ti-info-alt"></i></div>');
+                    infoBtn.on('click', function() { toggleInfo(); });
+                    var controls = $('.df-ui-wrapper');
+                    if(controls.length > 0) { controls.append(infoBtn); }
+                }
+            };
+
+            var book = $("#flipbook-container").flipBook(bookOptions.source, bookOptions);
+        });
     </script>
+
 </body>
 </html>
