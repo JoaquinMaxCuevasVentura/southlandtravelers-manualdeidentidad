@@ -166,7 +166,7 @@
 <body>
 
     <div id="grained-container"></div>
-    <div id="loader">CARGANDO RECURSOS...</div>
+    <div id="loader">CARGANDO DOCUMENTOS...</div>
 
     <!-- SIDEBAR -->
     <div id="sidebar">
@@ -185,7 +185,8 @@
                 <p>DISEÑO DE IDENTIDAD VISUAL<br>
                 <strong style="color:white; font-size:15px; letter-spacing:1px;">Joaquin Max Cuevas Ventura</strong></p>
                 <div class="modal-contact">
-                    2023<br>
+                    2023
+                </div>
                 <div class="modal-note">
                     Nota: Proyecto profesional de identidad visual corporativa para Southland Travelers, agencia de turismo con enfoque en Sudamérica. Este manual sistematiza los activos intangibles de la marca para garantizar su coherencia sistémica en todos los medios comunicativos.
                 </div>
@@ -232,7 +233,6 @@
     <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/grained/0.0.2/grained.min.js"></script>
-    <!-- Actualizado a versión 3.11 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <script>
@@ -242,11 +242,9 @@
                 "animate": true, "patternWidth": 100, "patternHeight": 100,
                 "grainOpacity": 0.05, "grainDensity": 1, "grainWidth": 1, "grainHeight": 1
             });
-        } catch(e) {}
+        } catch(e) { console.log('Grained no disponible'); }
 
         // --- 2. CONFIGURACIÓN PDF ---
-        
-        // ¡RENOMBRA TU ARCHIVO A: manual.pdf!
         var url = 'Manual de identidad corporativa_Soutland Travelers.pdf';
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -288,35 +286,58 @@
                 renderTask.promise.then(function() {
                     pageRendering = false;
                     document.getElementById('loader').style.display = 'none';
-                    annotationDiv.innerHTML = ''; 
+                    annotationDiv.innerHTML = '';
+                    
                     return page.getAnnotations();
                 }).then(function(annotations) {
                     if (annotations && annotations.length > 0) {
+                        var viewportClone = viewport.clone({ dontFlip: true });
+                        
                         pdfjsLib.AnnotationLayer.render({
-                            viewport: viewport.clone({ dontFlip: true }),
+                            viewport: viewportClone,
                             div: annotationDiv,
                             annotations: annotations,
                             page: page,
                             linkService: {
-                                navigateTo: function(dest) {
-                                    if (typeof dest === 'string') {
-                                        pdfDoc.getDestination(dest).then(function(destArr) {
-                                            if(destArr) goToDestination(destArr);
-                                        });
-                                    } else { goToDestination(dest); }
+                                externalLinkTarget: 2,
+                                getDestinationHash: function(dest) { 
+                                    return '#'; 
                                 },
-                                getDestinationHash: function(dest) { return '#'; },
-                                addLinkAttributes: function(link, url) {
-                                    link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                                getAnchorUrl: function(hash) {
+                                    return '#';
                                 }
-                            }
+                            },
+                            renderInteractiveForms: false
+                        });
+                        
+                        // Manejar clics en links internos
+                        var links = annotationDiv.querySelectorAll('a');
+                        links.forEach(function(link) {
+                            link.addEventListener('click', function(e) {
+                                var dest = this.getAttribute('data-dest');
+                                if (dest) {
+                                    e.preventDefault();
+                                    goToDestination(dest);
+                                }
+                            });
                         });
                     }
-                    if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
+                    
+                    if (pageNumPending !== null) { 
+                        renderPage(pageNumPending); 
+                        pageNumPending = null; 
+                    }
+                }).catch(function(err) {
+                    console.warn('Error en anotaciones:', err);
+                    if (pageNumPending !== null) { 
+                        renderPage(pageNumPending); 
+                        pageNumPending = null; 
+                    }
                 });
             }).catch(function(err){
                 console.error(err);
-                document.getElementById('loader').innerText = "ERROR AL RENDERIZAR PÁGINA: " + err.message;
+                document.getElementById('loader').innerHTML = "ERROR AL RENDERIZAR PÁGINA: " + err.message;
+                pageRendering = false;
             });
 
             document.getElementById('page-input').value = num;
@@ -324,26 +345,41 @@
         }
 
         function goToDestination(dest) {
-            if(!dest) return;
-            // Manejo seguro de destinos
-            var destRef = null;
-            if (Array.isArray(dest)) {
-                destRef = dest[0]; 
-            } else {
-                destRef = dest;
+            if(!dest || !pdfDoc) return;
+            
+            if (typeof dest === 'string') {
+                pdfDoc.getDestination(dest).then(function(destArr) {
+                    if(destArr && destArr.length > 0) {
+                        navigateToPage(destArr[0]);
+                    }
+                }).catch(function(err) {
+                    console.log('No se pudo resolver el destino:', err);
+                });
+            } else if (Array.isArray(dest) && dest.length > 0) {
+                navigateToPage(dest[0]);
             }
+        }
 
+        function navigateToPage(destRef) {
+            if (!destRef) return;
+            
             pdfDoc.getPageIndex(destRef).then(function(pageIndex) {
                 var newPage = pageIndex + 1;
-                if(newPage !== pageNum) {
-                    pageNum = newPage; queueRenderPage(pageNum);
+                if(newPage >= 1 && newPage <= pdfDoc.numPages && newPage !== pageNum) {
+                    pageNum = newPage;
+                    queueRenderPage(pageNum);
                 }
-            }).catch(function(){ console.log("Destino no es una referencia de página directa"); });
+            }).catch(function(err) {
+                console.log("Error al navegar:", err);
+            });
         }
 
         function queueRenderPage(num) {
-            if (pageRendering) pageNumPending = num;
-            else renderPage(num);
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
         }
 
         // --- SIDEBAR ---
@@ -353,7 +389,7 @@
             document.getElementById('sidebar-title').innerText = "ÍNDICE";
 
             pdfDoc.getOutline().then(function(outline) {
-                if (!outline) {
+                if (!outline || outline.length === 0) {
                     container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Sin índice.</div>';
                     return;
                 }
@@ -362,12 +398,13 @@
                     div.className = 'outline-item';
                     div.innerText = item.title;
                     div.onclick = function() {
-                        if (typeof item.dest === 'string') {
-                            pdfDoc.getDestination(item.dest).then(function(dest) { goToDestination(dest); });
-                        } else { goToDestination(item.dest); }
+                        goToDestination(item.dest);
                     };
                     container.appendChild(div);
                 });
+            }).catch(function(err) {
+                console.error('Error al cargar índice:', err);
+                container.innerHTML = '<div style="color:#666; font-size:12px; padding:20px;">Error al cargar índice.</div>';
             });
         }
 
@@ -395,13 +432,19 @@
                     lbl.innerText = idx;
                     item.appendChild(lbl);
 
-                    item.onclick = function() { pageNum = idx; queueRenderPage(pageNum); };
+                    item.onclick = function() { 
+                        pageNum = idx; 
+                        queueRenderPage(pageNum); 
+                    };
                     grid.appendChild(item);
 
                     pdfDoc.getPage(idx).then(function(p) {
                         var vp = p.getViewport({ scale: 0.15 });
-                        cvs.width = vp.width; cvs.height = vp.height;
+                        cvs.width = vp.width; 
+                        cvs.height = vp.height;
                         p.render({ canvasContext: cx, viewport: vp });
+                    }).catch(function(err) {
+                        console.error('Error al renderizar miniatura:', err);
                     });
                 })(i);
             }
@@ -425,24 +468,57 @@
             if (sidebarState === mode) {
                 sidebar.classList.remove('open');
                 sidebarState = 'closed';
-                btnO.classList.remove('active'); btnT.classList.remove('active');
+                btnO.classList.remove('active'); 
+                btnT.classList.remove('active');
             } else {
-                if(mode === 'outline') { renderOutline(); btnO.classList.add('active'); btnT.classList.remove('active'); }
-                else { renderThumbnails(); btnT.classList.add('active'); btnO.classList.remove('active'); }
+                if(mode === 'outline') { 
+                    renderOutline(); 
+                    btnO.classList.add('active'); 
+                    btnT.classList.remove('active'); 
+                } else { 
+                    renderThumbnails(); 
+                    btnT.classList.add('active'); 
+                    btnO.classList.remove('active'); 
+                }
                 sidebar.classList.add('open');
                 sidebarState = mode;
             }
         }
 
         // --- EVENTOS ---
-        document.getElementById('prev').onclick = function() { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); };
-        document.getElementById('next').onclick = function() { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); };
-        document.getElementById('zoom-in').onclick = function() { scale += 0.2; queueRenderPage(pageNum); };
-        document.getElementById('zoom-out').onclick = function() { if(scale <= 0.4) return; scale -= 0.2; queueRenderPage(pageNum); };
+        document.getElementById('prev').onclick = function() { 
+            if (pageNum <= 1) return; 
+            pageNum--; 
+            queueRenderPage(pageNum); 
+        };
+        
+        document.getElementById('next').onclick = function() { 
+            if (pageNum >= pdfDoc.numPages) return; 
+            pageNum++; 
+            queueRenderPage(pageNum); 
+        };
+        
+        document.getElementById('zoom-in').onclick = function() { 
+            scale += 0.2; 
+            queueRenderPage(pageNum); 
+        };
+        
+        document.getElementById('zoom-out').onclick = function() { 
+            if(scale <= 0.4) return; 
+            scale -= 0.2; 
+            queueRenderPage(pageNum); 
+        };
         
         document.getElementById('btn-fullscreen').onclick = function() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else if (document.exitFullscreen) document.exitFullscreen();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(function(err) {
+                    console.log('Error al activar pantalla completa:', err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
         };
 
         document.getElementById('btn-outline').onclick = function() { toggleSidebar('outline'); };
@@ -451,7 +527,12 @@
         document.getElementById('page-input').addEventListener("keypress", function(e) {
             if (e.key === "Enter") {
                 var val = parseInt(this.value);
-                if (val >= 1 && val <= pdfDoc.numPages) { pageNum = val; queueRenderPage(pageNum); }
+                if (val >= 1 && val <= pdfDoc.numPages) { 
+                    pageNum = val; 
+                    queueRenderPage(pageNum); 
+                } else {
+                    this.value = pageNum;
+                }
             }
         });
 
@@ -460,26 +541,28 @@
             if (e.key === "ArrowLeft") document.getElementById('prev').click();
         });
 
-        window.addEventListener('resize', function(){ scale = 1.0; queueRenderPage(pageNum); });
+        window.addEventListener('resize', function(){ 
+            scale = 1.0; 
+            queueRenderPage(pageNum); 
+        });
 
         // --- INICIALIZAR ---
         pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
             pdfDoc = pdfDoc_;
-            document.getElementById('page-total').textContent = "/ " + pdfDoc.numPages;
+            document.getElementById('page-total').textContent = "/ " + (pdfDoc.numPages < 10 ? '0' : '') + pdfDoc.numPages;
             renderPage(pageNum);
         }).catch(function(err) {
-            // MUESTRA EL ERROR EN PANTALLA
             var msg = "ERROR: No se pudo cargar el archivo PDF.<br><br>";
             if(err.name === 'MissingPDFException') {
-                msg += "No se encuentra el archivo 'manual.pdf'.<br>Asegúrate de que el archivo está en la misma carpeta y renombrado.";
-            } else if (err.name === 'UnknownErrorException' && window.location.protocol === 'file:') {
-                msg += "Bloqueo de seguridad CORS detectado.<br>No puedes abrir el HTML con doble clic.<br>Usa 'Live Server' en VS Code.";
+                msg += "No se encuentra el archivo 'Manual de identidad corporativa_Soutland Travelers.pdf'.<br>Asegúrate de que el archivo está en la misma carpeta.";
+            } else if (err.message && err.message.includes('CORS')) {
+                msg += "Bloqueo de seguridad CORS detectado.<br>No puedes abrir el HTML con doble clic.<br>Usa 'Live Server' en VS Code o un servidor local.";
             } else {
-                msg += err.message;
+                msg += err.message || 'Error desconocido';
             }
             document.getElementById('loader').innerHTML = msg;
-            document.getElementById('loader').style.color = 'red';
-            console.error(err);
+            document.getElementById('loader').style.color = '#dc6b2f';
+            console.error('Error detallado:', err);
         });
 
         function toggleInfo() {
@@ -495,9 +578,14 @@
                 btn.classList.add('active');
             }
         }
+        
         document.getElementById('btn-info').onclick = toggleInfo;
-        window.onclick = function(e) { if (e.target == document.getElementById('infoModal')) toggleInfo(); }
-
+        
+        window.onclick = function(e) { 
+            if (e.target == document.getElementById('infoModal')) {
+                toggleInfo(); 
+            }
+        };
     </script>
 </body>
 </html>
